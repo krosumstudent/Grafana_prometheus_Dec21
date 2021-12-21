@@ -1,0 +1,101 @@
+https://github.com/krosumstudent/Grafana_prometheus_Dec21
+
+-> Time series database
+-> influx db
+-> influx db with grafana
+-> grafana alerts
+-> annotation
+-> variables
+---------------------------------------------------------------------------------------
+
+
+product  salescount
+Px	 100		--> Px 100 <timestamp> => Px-100:<timestamp>
+Py	 120					  ------------------
+
+
+   150|
+      |    *(Py) - Py-120-<timestamp>
+  100 | *(Px)
+      |
+  50  |
+  ------------------------------
+      |  9   10   11   12  13 
+  
+   |
+   |
+  --------------------
+   | 9:00 9:30  ...
+
+
+
+influxdb
+----------
+create database <dbname>
+
+measurement // table
+field-key=fieldValue //equivalent to columns
+
+create database <DBname>
+
+use database
+
+insert <measurement> fields 
+			|
+			key=value
+
+insert <measurement>,key=value,key=value... 
+
+create database mysystem_metrics
+
+use mysystem_metrics
+
+insert cpuUsage,host=node1,region=us-east IO=12
+
+host region value <timestamp>
+
+
+
+[grafana]:3000				[influxDB]:8086
+		
+	<-----------HTTP endpoints------->
+
+SELECT * FROM "IPC" WHERE ("host" = 'serve1')
+
+--------------------------------------------------------
+
+interface datasource 
+
+step 1: configure - datasource (ex: influxdb,prometheus,mysql...)
+	  |
+	step 2: http end points - we can connect datasource to grafana			      
+	  |
+	step 3: test - OK
+	  |
+	step 4: go to dashboard panel 
+				|
+				select datasource
+				|
+			-------------------
+			|	 (or)	    |
+			Query editor(GUI)   raw query editor
+			|			|
+			query ..
+
+      step 5: visualization 
+-------------------------------------------------------------------------------------
+
+	resource datapoints	- critical state - send alert notification - user
+	 |
+	 |
+    ------------------------
+    |			   |
+  product <count/cost>    metric (CPU;RAM;Stoarge)
+
+
+
+step 1: create notification channel - types:mail;slack....
+|
+step 2: alert rules - define condition 
+
+==========================================================================================
