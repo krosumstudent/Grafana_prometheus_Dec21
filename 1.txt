@@ -1,0 +1,526 @@
+Grafana & Prometheus 
+----------------------
+DAY1 & DAY2 - Grafana 
+DAY3 - DAY5 - prometheus
+--------------------------------------------
+Grafana  
+-------
+ |_ starts with grafana - visualization types using sample data from random query.
+
+InfluxDB + Grafana
+
+prometheus + Grafana 
+
+----------------
+OS - services
+	
+json - api
+
+Grafana
+|
+Timeseries 
+|
+ex: influxDB
+|
+Grafanfa + influxDB ->Dashboard
+|
+prometheus
+ |_prometheus
+ |_monitoring
+ |_configuration & services
+ |_promQL
+ |_node exporter - services
+ |_alert manager - services
+         |_alert rules - filename.yml
+ 	 |_channels - slack,mail
+ |_ service discovery - services
+ |_ Application(ex: python flask ; django;java spring;Rails; appln) - services	
+ |
+ |_ prometheus internals
+ |_ prometheus with grafana 
+
+========================================================================================
+ 
+OS - System software - interface btn user and h/w
+|
+|__ Kernel - core part of an OS
+     |
+     |__ File,Process
+
+File: data - under the storage device
+|
+Process: data - under the CPU
+			  ----
+
+		Process
+		   |
+   -----------------------------------------------
+   |						 |
+ user process					system process
+ 			
+  - by user					- not created  by user
+						
+  - TTY: pts/<port>				- started automatically - during os booting time
+						- not TTY (?)
+  - parent is: Desktop(or)shell			- running background
+						- Running state
+  - start->Running->Exit			- session leader
+		||  =====			
+		STOP				- service (or) daemon
+						
+
+In Linux boot process
+
+
+OFF ->Switch ON PC ->POST ->MBR(MasterBootRecord)->Bootloader(Grub/grub2)->Kernel
+									     |
+									   Process(OL[78]-systemD;OL[56]-init)//PID:1
+									     |
+									   create a list of process //systemprocess - ?
+									     |
+									 Login (or) getty (or) tty ?
+									     |
+									 Desktop Vs commandline shell(cLI)
+									     |		|
+								       User I/O - user process
+
+ ssh <remotehost> <== user process
+ ----------------
+ sshd <=== system process    sshd.service
+ 
+ cron -e <=== user process
+ ----------
+ crond <== system process crond.service
+
+ mysql -u .... <== user process
+ ----------------
+ mysqld <==== system process mysqld.service 
+
+ grafana-server.service 
+
+ prometheus.service 
+ 
+ 
+ session leader
+ --------------
+
+ P1(PID:101) P2(102)  P3(103)  P4(104)  P5(105)  P6(106)  P7(107)  P8(108) P9(109)  P10(110)
+ 
+ Process Group - collection of process 
+ ---------------------------------------
+ P1 P2 P3			P4 P5		P6 P7		P8 P9 P10
+ --------			-----		-----		----------
+ Process Group(PGID:101)	PGID:104       PGID:106		PGID:108
+
+  PID  PGID
+  101	101
+  102   101
+ 
+ session - collection of process group IDs
+ ------------------------------------------
+ P1  P4  P6  P8  - SID
+ ==============
+   |_ SID:101
+
+ PID	PGID	SID
+ 101	101	101
+ 102	101	101
+ 107	106	101
+ 
+ 
+ ssh <remotehost> <== user process - OK
+ ----------------
+ sshd <=== system process    sshd.service - Running 
+
+ 
+
+ ssh <remotehost> <== user process - Error 
+ ----------------
+ sshd <=== system process    sshd.service -Stopped 
+
+ 
+ -----------------------------------------------------------------------------------------------------
+ filename.service (ex: grafana-service.service sshd.serivce mysqld.service prometheus.service ...)
+ ----------------
+	|
+	|__ File,Process
+  		 .......
+
+   service file template(configuration)
+
+   ini format	Vs yaml format
+   ==========      ============
+	|
+	|
+	Key=Value 
+	   
+   [ID]
+   Key1=Value1
+   Key2=Value2
+   ..
+   KeyN=ValueN
+  ...................
+ 	
+
+ Linux like OS
+ ----------------
+ systemctl command
+ ---------
+     |_ systemctl start service (ex: systemctl start sshd; systemctl start grafana-server)
+     |_ systemctl status service(ex: systemctl status sshd; systemctl status grafana-server)
+     |_ systemctl stop service(ex: systemctl stop sshd; systemctl stop grafana-server)
+     |_ systemctl restart service(ex: systemctl restart sshd;systemctl restart grafana-server)
+     |
+     |_ systemctl is-active service(ex: systemctl is-active sshd;systemctl is-active grafana-server)
+     |
+     |_ systemctl is-enabled service(ex:systemctl is-enabled sshd;systemctl is-enabled grafana-server)
+	
+      
+     |__ systemctl enable service 
+         systemctl enable sshd  <== automatically started (during os loading time)
+         systemctl enable grafana-server <== automatically started (during os loading time)
+     	
+	
+ 
+  --------------------------------------------------------------------
+  p1.java p1.object  file1   
+
+
+  vi file2
+  command1
+  command2
+  ..
+  commandN
+  :wq
+
+  chmod a+x file2
+  ./file2 <== this is user process 
+   ------
+     |__ convert to system process
+
+
+	1. create own custome service file (unit file <==Linux) - ini (or) yaml (fileAB.service) 
+	 
+        2. reload daemon => systemctl daemon-reload
+   
+	3. systemctl enable filenameAB.service
+
+	4. systemctl start filenameAB.service
+
+ 
+ ---------------------------------------------------------------------------------------------------
+  
+ OL[56] -> service command		OL[78] ->systemctl
+
+ service sshd start			systemctl start sshd
+ service sshd stop		Vs	systemctl stop sshd
+ service sshd restart			systemctl restart sshd
+ service sshd status			systemctl status sshd
+ .....................			......................
+						
+ ---------------------------------------------------------------------------------------------------
+ Grafana
+ --------
+  -> Grafana is an open source solution for running data analytics
+  -> visualization tool
+  -> pulling up metrics (system resource details) //data ->query ->visualization dashboard
+		|
+		cpu utlization;filesystem;memory;disk etc.,
+ 
+  -> analyse ->dashboard
+	|
+	from dataSource(Timeseries format)
+
+
+
+
+  -> Grafana - from datasource (influxDB,prometheus,graphite,MysqL etc.,)
+
+		  +
+		file.CSV - add plugin 
+			   ............
+			 
+  
+ ----------------------------------------------------------------------------------------------
+ Grafana 
+  |
+ installation
+  |
+ explore - grafana tools + sampledata
+			  ...........
+				|
+			    data + influxDB ...
+ 
+
+  open a broswer -> http://localhost:3000/ 
+
+		    Login: admin
+	
+		    passwd: admin <==
+
+
+ @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+ RHL - install sotware package 
+
+	yum install <package> (or) rpm - file -> package-version-release.arch.rpm 
+						 ................................
+
+ Debian - apt-get install <package>
+	  -------
+		(or)
+	  apt install <package>
+
+ @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+ panel - visualization unit
+
+ dashboard - collection of panels
+  |
+ A dashboard contains several different individual panels on the grid.
+ each panel has different functionalities.
+			 // attributes(or) property
+---------------------------------------------------------------------------------------------
+
+json 
+----
+ - data only format
+   ................
+
+
+https://www.abc.com/search
+
+Enter an emp ID:| <empid> | 
+(submit)
+
+
+ Emp Name: Mr.ABC
+ Emp ID:   1334
+ Emp Cost: 436434.34
+		<============= webpage (html+data)
+					     .....
+				<html>
+				<body>
+				<p>
+				<h2>Emp name:....</h2>
+				</html> 
+	
+json 
+Mr.ABC
+1334
+436334.34
+..........//data only format <== json
+
+
+1.scalar - single - int float str bool null
+				   |
+				 true false
+  
+2.collection - array;object/dict
+		|    ...............
+		|		|_{key:value} //keybased
+		[]
+		|
+		index based
+
+ v=[d1,d2,d3] <==Array
+
+ d={"K1":V1,"K2":"V2","K3":V3} <== object - keybased 
+
+
+ array;object - mutable (changeable) - we can modify
+
+
+array of array -> v=[[],[],[]]
+array of object -> v=[{},{},{}]
+
+object of array ->d={k1:[],k2:[],k3:[]}
+
+object of object ->d={K1:{},K2:{}..}
+
+
+
+d:{K1:V1,
+K2:[ ],
+K3:{ },
+K4:{Key1:[],Key2:{},Key3:[{},{}],Key4:Value}
+}
+--------//panel json format
+
+
+API
+
+https://reqres.in/api/products/3  Vs  https://www.google.com
+--------------------------------
+ Content-Type:application/json		Content-Type:html
+		
+..........................................................................................
+reusablity - lib panel 
+..........................
+
+ create a panel (normal style)
+  |
+ panel title bar ->(downarrow) click  ->more ->create library panel
+  |
+ save panel/dashboard
+  |
+ 
+ Reusing existing panel
+ ========================
+ create a new dashboard -> create a newlibpanel
+					|
+				list of lib panels 
+
+ libpanels are link files
+	|
+	when libpanel attrs get changed in current dashboard ->all the connected dashboard will updated
+	|
+	|
+	removelink panel - deattched from panel lib - individual panel
+..........................................................................................
+	
+
+link (or) embedded grafana dashboard with existing html page(webpage)
+		   ------------------
+
+go to granafana conf file
+|
+change the default settings
+|
+allow_embedding=true # ;allow_embedding=true (old value)
+|
+then 
+|
+[auth.anonymous]
+# enable anonymous access
+
+enabled = true
+    # ;enabled=true <== this is old value
+==========
+save a conf file
+|
+restart service (systemctl restart grafana-server)
+
+in html page
+...............
+<iframe src=<grafanadashboarlink>..</iframe>
+	     ------------------
+		|
+		share ->embedd - copy link
+
+------------------------------------------------------------------------------
+
+ panel - visualization tool
+
+ dashboard - collection of panel - own set of attributes
+						|
+						params - json format 
+							  |
+							 structure - mutable(we can modify)
+	
+ panel - json format - copy/paste
+	 -----------
+	  |
+	  export as json file(file.json)
+				|
+				import json file (import external panel)
+	  |
+	 snapshot link - current state of panel result
+
+	
+ more panels - dashboard
+ 	|
+	record/rows
+
+ reusablity - panel libs
+
+ --------------
+ panel property - edit - modify (attributes)
+
+   manages
+        |
+    general
+	|
+	|__dashboard/panel1...panelN	
+    folder1
+	|
+   	|__dashboard/panel1...panelN
+	|__dashboard/panel1...panelN
+    folder2
+	|
+   	|__dashboard/panel1...panelN
+	|__dashboard/panel1...panelN
+
+
+playlist - monitor morethan one dashboard 
+........
+
++ - create new folder/dashboard/panel/import external jsonfile
+-   ...........................................................
+
+============================================================================================
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+			
+                        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+ 	
+
+
+
+
+
+
+
+
+
+
+
+
+
+			
+  
+ 
+ 
+  
+ 
+
+
+
+
+
+
+
+
