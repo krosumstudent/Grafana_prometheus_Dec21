@@ -1,0 +1,364 @@
+ yaml (or) yml
+ json
+ service - file
+ -----------------
+ yaml
+ ----
+  |->prometheus config is yaml
+  |->alert rules -> ymal format
+ 			
+  yaml
+  ----
+   -> searilization code
+   -> file content format - key: value pair format
+		            ==========
+
+  in json 		in python	in yaml
+  --------		-----------	--------
+  {K:Value}		{k:value}	{k:<Space>Value}
+						|__required
+
+  value
+  ......
+    1.scalar (value)
+    2.collection (array/list ; object/dict)
+		   index	 key:value
+		    []		  {} 
+
+   in yaml
+   ----------
+   key:<Space>[Value1,Value2,Value3,value4....ValueN]
+							
+		(or)
+   
+   key:
+   -<Space>Value1
+   -<Space>Value2
+   -<Space>Value3
+    ..
+   -<Space>ValueN
+
+   app
+   ----
+   |->appID: 101
+   |->appName: TestApp
+   |->Version: 1.20
+   |->Status:  on
+   ---------------------//single structure 
+
+   value ->101 TestApp 1.20 on
+	   --------------------
+
+
+   app_params: [101,TestApp,1.20,on]
+	  (or)
+
+   app_params:
+   -<S>101
+   -<S>TestApp
+   -<S>1.20
+   -<S>on
+
+   object(or)dict
+   ---------------
+   Key1:<S>Value1
+   Key2:<S>Value2
+   ...
+   KeyN:<S>[V1,V2,V3]
+
+
+   KeyN:
+   - V1
+   - V2
+
+
+   Key: { }
+
+   db: {class: oracle,class: sql}
+	-----	      -----
+	  |		|
+	  |-------------|
+		|
+		key must be unique
+
+   db: {class: [oracle,sql]}
+   --   =====   ------ ---
+   
+   db: {K1:{class: oracle},K2:{class: sql}}
+   .........................................
+
+   db:
+    K1: 
+     class: oracle
+     ---
+     class: sql
+     ---
+   ----------
+	|
+	|
+	db:
+	  K1: [{class: oracle},K2:{class: sql}]
+
+	db:				db:
+          K1:				  K1:
+            - class=oracle	(or)	    - class: oracle
+	    - class=sql			    - class: sql
+				
+ 
+  
+   key1: V1,
+   key2: [V2,V3,V4]
+   key3: {Kx: Vx,Ky: Vy}
+   ----|----------------------
+
+ K1:
+   key1: V1,
+   key2: [V2,V3,V4]
+   key3: {Kx: Vx,Ky: Vy}
+   ----|----------------------
+
+  scrape_configs: [{jobname:prometheus},{jobname:flask-app},{jobname:mysql},{jobname:remoteNode}]
+		  ................................................................................
+
+  scrape_configs:
+  - jobname: prometheus
+  - jobname: flask-app
+  - jobname: mysql
+  - jobname: remoteNode1
+  - jobname: remoteNode2
+  - jobname: remoteNode3
+    ..
+  - jobname: remoteNodeN
+
+ ---------------------------//dict of array of dict
+			    //--------------
+				      ==============
+
+ commandline
+ |
+ adhoc command -> ansible <remotehost> -m yum -a "name=python3 state=latest"					
+			  ------------                                 				
+
+
+    tasks:
+    - name: <Task1Name>
+      yum:
+       name: python3
+       state: latest
+    ----------------//yml format
+
+
+  emp:{eid:[],ename:[],edept:{"D1":"","D2":""}}
+  ...............................................
+   |
+   emp - is a key
+    |
+    value is dict
+	      |
+	      eid: Value is an array
+	
+    edept - value is a dict
+		
+-----------------------------------------------------------------------------------------------------
+  key1:<S>Value
+  key2:<S>[V1,V2,V3]
+  key3:
+  -<S>V1
+  -<S>V2
+  -<S>V3
+  key4:
+   ...
+   ...
+ --------------------------------------------------------------------------------------------------
+
+ service file - unit file - ini format
+  
+ --------------------------------------------------------------------------------------------------
+ 
+
+ prometheus
+ ----------
+ ->monitoring tool
+ ->timeseries database
+ ->data - dimensional data
+
+ 
+ [metricname]    [Label]	[sample]
+  
+
+ ex:
+ ---
+ tempearture	 location=city     90  <timestamp>
+ ........... 	 .............	  ...	
+
+ metric 
+
+ cpuUtilization	 {jobname=<node1>}  15
+    |		 __________________ ===
+    |			Label	     |__Value
+    |
+  metric name
+
+ core components:-
+ ------------------
+(1) prometheus-server
+   ------------------
+   |-> single server - control many systems/servers
+   |-> selfmanaged architecture  
+   |-> timeseries
+   
+ (2) targets(exportes) - systems - where monitoring process is performed
+	|
+	|__ node m/c
+	|__ cloud 
+	|__ LXC
+	|__ LXC - applnx
+
+ (3) pushgateway -  shortermjobs
+ 
+ (4) alertmanagers - sending alert notification
+  
+ (5) client libs - api 
+
+ ---------------------------------------------------------------------------------------------
+
+  -> download from prometheus -> https://github.com/prometheus/prometheus/release/download/
+
+
+ Linux m/c
+ ----------
+ su - (or) sudo  
+
+ wget https://github.com/prometheus/prometheus/release/download/prometheus-v2.32.1.linux-amd64.tar.gz
+ 
+ tar -xzvf prometheus-v2.32.1.linux-amd64.tar.gz
+ 
+ cd prometheus-v2.32.1.linux-amd64
+
+ # - create user account
+ 
+ useradd --no-create-home --shell /bin/false prometheuse
+ 
+ # - ownership 
+ mkdir -p /etc/prometheus
+ mkdir -p /var/lib/prometheus
+
+ # set ownership
+ chown prometheus:prometheus /etc/prometheus
+ chown prometheus:prometheus /var/lib/prometheus
+
+ # - copy the bin files to /usr/bin (or) /usr/local/bin
+ 
+ cp prometheus /usr/local/bin/
+ cp promtool /usr/local/bin/
+
+ chown prometheus:prometheus /usr/local/bin/prometheus
+ chown prometheus:prometheus /usr/local/bin/promtool
+
+ 
+ # copy config file
+ cp -r consoles /etc/prometheus
+ cp -r console_libraries /etc/prometheus
+ cp prometheus.yml /etc/prometheus/prometheus.yml
+
+ 
+ chown prometheus:prometheus /etc/prometheus/consoles
+ chown prometheus:prometheus /var/lib/consoles_libraries
+ 
+ # - create a unit file (or) service (file: /etc/systemd/system/prometheus.service)
+
+ vi /etc/systemd/system/prometheus.service
+
+ [Unit]
+
+
+ [Service]
+ 
+ ExecStart=/usr/local/bin/prometheus 
+
+ [Installed]
+  
+ :wq
+ 
+ systemctl daemon-reload
+ systemctl enable prometheus
+ systemctl start prometheus
+
+ 
+ 
+ @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+ in shellscript
+ --------------
+
+ variable=value		-> myname="DBA"
+ 			   echo myname ->myname
+			   echo ${myname} ->DBA
+ ${variable} ->value
+
+
+ pv="2.32.1."
+
+ 
+ wget https://github.com/prometheus/prometheus/release/download/prometheus-v${pv}linux-amd64.tar.gz
+ 
+ @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+ localhost:9090
+ process_cpu_seconds_total <--  localsystem
+
+ 
+
+
+ ====================================================================================================
+ node exporter lab setup
+ ----------------------------
+
+ remote system
+ ................
+
+
+  [Node1]   [Node2]
+    |<--------->|
+    |<--------->|
+  
+ Using Virtual box 
+ ..................
+ connect multiple node
+
+ step1:  file ->preferences ->Network -> click +  ->bridgename(ex:LAB1) ->OK
+  
+ step2:  select node ->settings ->network ->[Adapter] ->Attached to ->NAT Network ->(select BridgeName)
+ ..
+ same step 2 - do all other nodes 
+
+ |
+ start a node one by one 
+
+ ip addr
+ 
+ config file : /etc/sysconfig/network-scripts/ifcfg-<interfaceName>
+		...
+		...
+
+ systemctl status NetworkManager
+
+ config file: /etc/hosts
+
+ <remoteIP>  <FQDN>  <alias>
+ 10.20.30.40  host01.example.com  host01
+ ..
+
+ systemctl restart network
+ 
+ ping <remoteIP>  (or) ping FQDN (or) ping alias
+ 
+ ...
+ ...
+ ...
+ ------------------------------------------------------------------------------------------------
+  node_boot_time
+  node_cpu
+  node_*
+  ......................//remote node details
+  -----------------------------------------------------------------------------------------------

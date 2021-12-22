@@ -1,0 +1,282 @@
+https://github.com/krosumstudent/Grafana_prometheus_Dec21
+
+-> Time series database
+-> influx db
+-> influx db with grafana
+-> grafana alerts
+-> annotation
+-> variables
+---------------------------------------------------------------------------------------
+
+
+product  salescount
+Px	 100		--> Px 100 <timestamp> => Px-100:<timestamp>
+Py	 120					  ------------------
+
+
+   150|
+      |    *(Py) - Py-120-<timestamp>
+  100 | *(Px)
+      |
+  50  |
+  ------------------------------
+      |  9   10   11   12  13 
+  
+   |
+   |
+  --------------------
+   | 9:00 9:30  ...
+
+
+
+influxdb
+----------
+create database <dbname>
+
+measurement // table
+field-key=fieldValue //equivalent to columns
+
+create database <DBname>
+
+use database
+
+insert <measurement> fields 
+			|
+			key=value
+
+insert <measurement>,key=value,key=value... 
+
+create database mysystem_metrics
+
+use mysystem_metrics
+
+insert cpuUsage,host=node1,region=us-east IO=12
+
+host region value <timestamp>
+
+
+
+[grafana]:3000				[influxDB]:8086
+		
+	<-----------HTTP endpoints------->
+
+SELECT * FROM "IPC" WHERE ("host" = 'serve1')
+
+--------------------------------------------------------
+
+interface datasource 
+
+step 1: configure - datasource (ex: influxdb,prometheus,mysql...)
+	  |
+	step 2: http end points - we can connect datasource to grafana			      
+	  |
+	step 3: test - OK
+	  |
+	step 4: go to dashboard panel 
+				|
+				select datasource
+				|
+			-------------------
+			|	 (or)	    |
+			Query editor(GUI)   raw query editor
+			|			|
+			query ..
+
+      step 5: visualization 
+-------------------------------------------------------------------------------------
+
+	resource datapoints	- critical state - send alert notification - user
+	 |
+	 |
+    ------------------------
+    |			   |
+  product <count/cost>    metric (CPU;RAM;Stoarge)
+
+
+
+step 1: create notification channel - types:mail;slack....
+|
+step 2: alert rules - define condition 
+
+==========================================================================================
+
+
+
+   [influxDB]
+	
+    product list (productname,salescount,date/time)
+		  Pa - 150 - 22nd dec 10
+		  Pa - 120 - 22nd dec 11
+		  Pa - 180 - 22nd dec 15
+		  ..   +-    -----------//timeindex
+		       ___
+
+			<150 --- send notification -- to person (or) group of person
+			|		|
+			|		mail,msg,slck etc., <== channels
+			|		=======================
+			|				|
+			rules(condition)		|
+						       notification
+
+   [influxDB] - shm_memory ->IPC ->shm_value
+					|
+					...	 ....
+
+ 
+  [prometheus] -----------[alertmanager] - [channel]
+	|					|--mail,slack ...... [user]
+	|
+      [server]
+	CPU
+========================================================================================================
+
+
+ STEP 1 : configure alert notification channels -> channel -> newchannel
+
+		Name: <user defined logical name>
+		Type: <mail;slack;>
+		|
+		ex: mail ->address: userA@gmail.com;userB@hostname.com
+		|
+		[save]
+	
+ Resource(datapoints) is critical -- grapfana send alert-notification to concern user(s)
+						   .................
+							mail(or) slack (or) others
+	
+ 
+
+
+ Recap - Graph(old) visualization ->select threshould attribute
+				     ------------------------
+						|
+						broken heart symbol <== critical symbol
+
+  STEP 2: create a alert rules(condition)
+
+	 Query 		
+	  |
+	 field value (avg/max/min)
+	..............................
+		|_A B ..<==query logical name
+
+	 goto 3rd tab ->Alert
+			|
+			[create alert]
+			|
+			alertname:_____
+			|
+			....  threshould attributes are disabled 
+
+ STEP 4: goto panel ->create a newpanel
+				|
+				Alertlist <== default alert panel
+				.........
+	
+ STEP 5: Save
+
+ notified ->pending 
+-------------------------------------------------------------------------------------------------------
+
+variable
+---------
+    |__ namespace (or) label (or) placeholder - holding a value
+    
+    |__filter  - select few subset 
+
+ex:
+---
+shm_memory
+
+	server1
+	server2
+	server3
+	...
+	seerverN
+
+
+  monitor -> server1 server2 sever5 server50
+	     server1 only
+		...
+		...
+  ------------------------------------//variable 
+
+  Relational operators 
+ 
+  ==  != <  <= > >=
+
+
+  Regx (or) bind operators
+  -------------------------
+  =~  !~
+
+  ^pattern - line starts with pattern	 
+  
+  pattern$ - line ends with pattern
+  
+  ^pattern$ - line contains - pattern only
+  
+  sales == sales  - True
+
+  sales == sales, - False
+
+  list of sales emp details =~ sales - True
+ 
+  [ ] - character based search 
+
+  [a-z] - match any lowercase chars
+  [A-Z] - match any uppercase chars
+  
+  [a-zA-Z] - match any alpha 
+   
+  [0-9] - match any digits
+
+  [a-zA-Z0-9] - match any alpha
+  
+  ^[a-zA-Z0-9]		[a-zA-Z0-9]$
+  |-----------		-----------|
+
+   .* - list of all
+
+   pattern1|pattern2 - any onepattern is matched - True 
+   (pattern1)(pattern2) - both pattern should match same order
+
+  <pattern> - 1 or more ab+c ->abc abbbbbbbbbbbc abbbbbbbbbbbbbbbbbc //matched
+				|   ...........   .................
+   {} - range
+   ---
+   <pattern>{n} - ntimes ex: ab{2}c =>abbc 
+
+   <pattern>{n,} - minimum n times -> ex: ab{2,}c =>abbc abbbbbbbbbbbbbbbbbc //matched
+	
+	^[a-zA-Z][0-9]{3,}.*network.*[dsh]$
+	 --------=========___________=====
+   
+	F345anynetworkinterface details //matched
+	|---   =======----------      =
+  
+
+   <pattern>{n,m} - minimum n times maximum m times
+    -------
+	ab{2,4}c ->abbc abbbc abbbbc 
+ ---------------------------------------------------------------------------------------------------
+
+
+  in grafana regx query 
+
+   /pattern/
+	|
+	|
+	variable -> $variable
+
+ 
+   var 100 
+   |
+   var	  Vs  $var ->100
+   |
+   var
+
+   /^$variable$/
+
+-----------------------------------------------------------------------------------------------------
