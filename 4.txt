@@ -1,0 +1,454 @@
+ 
+ Recap:
+ ---------
+ prometheus - monitoring tool
+	    - visualization
+	    - metric 
+
+
+ [metricName]{Key1=V1;Key2=V1...Kn=Vn}	[SampleValue]
+  ---------------------------------------------------
+
+	   - promQL
+
+  - after installed prometheus 
+
+  - /etc/prometheus/promethes.yml
+		    -------------
+			|
+		
+  key:<S>Value
+  
+  key:<S>Value
+   <S>Key:<S>value
+   <S>Key:<S>Value
+  
+  ---------------------------------------//dict of list of dict
+
+  - unit file - service file (/etc/systemd/system/prometheus.service) 	
+
+  open a broswer -> localhost:9090 {enter}
+		..........
+		..........
+		..........
+ -----------------------------------------------------------------------------------------------------
+ clientNode			prometheus
+ [OL7]				[Ubuntu] 
+   |------------network---------------|
+
+ node_exporter 
+  HTTP endpoints
+
+
+ [node]--<node_exporter>
+	    |
+	   agent ---------------------------prometheus ---> | monitoring |
+	    |							....
+	   (service file)
+		
+ node_exporter
+ --------------
+
+ wget https://github.com/prometheus/node_exporter/
+
+ tar -xvzf node_exporter-
+ 
+ cd node_exporter-<Dirname>
+
+ cp node_expoter /usr/local/bin
+ 
+ useradd --no-create-home --shell /bin/false node_exporter
+
+ chown node_exporter:node_expoter /usr/local/bin/node_expoter
+
+ # create a unit file for node exporter
+ # 
+ #  /etc/systemd/system/node_exporter.service
+
+ systemctl daemon-reload
+ systemctl enable node_exporter
+ systemctl start node_exporter
+ 
+ # client m/c						prometheus m/c
+							|
+							|
+							Update remote node details into 
+							/etc/prometheus/prometheus.yml file
+
+
+							- job_name: 'node_exporter'
+							  ...
+							    - targets: ['<remoteHostIP>:9100']
+
+							|
+							restart a prometheus 
+							.....................
+----------------------------------------------------------------------------------------------------
+			
+ user name: root
+
+ password:  apelix
+ ------------------------------------------------------------------------------------------------
+  
+ node_exporter activity
+ ------------------------
+
+ prometheus m/c
+ -----------------
+ step 1: download node_exporter file from github.com/prometheus/....
+ 
+ wget https://github.com/prometheus/node_exporter/releases/download/v*/node_exporter-.linux-amd6
+ 
+ step 2: extract zip file 
+ 
+ tar -xvzf node_exporter-version.linux-amd64.tar.gz
+ 
+ step 3: change the directory
+ cd node_exporter-*
+
+ step 4: copy the node_exporter bin file to /usr/local/bin/ 
+  
+ cp node_exporter /usr/local/bin
+
+ step 5:  create a user account
+
+ useradd --no-create-home --shell /bin/false node_exporter
+
+ step 6: give file ownership
+
+ chown node_exporter:node_exporter /usr/local/bin/node_exporter
+ 
+ step 7: create node_export unit/service file
+
+ vi /etc/systemd/system/node_exporter.service
+
+ [Unit]
+ Description=Node Exporter
+ Wants=network-online.target
+ After=network-online.target
+ 
+ [Service]
+ User=node_exporter
+ Group=node_exporter
+ Type=simple
+ ExecStart=/usr/local/bin/node_exporter
+ [Install]
+ WantedBy=multi-user.target
+ 
+ :wq
+
+ step 8: enable node_exporter in systemctl
+ 
+ systemctl daemon-reload
+ systemctl start node_exporter
+ systemctl enable node_exporter
+ 
+ step 9: check the node_exporter status
+ systemctl status node_exporter
+
+ 
+ ## the same above 9 steps - do it in client m/c - agent
+ ##
+ 
+ ## in prometheus m/c
+
+ STEP 10: update remote node IP details into prometheus file
+
+ vi /etc/prometheus/prometheus.yml
+
+   - job_name: 'node_exporter'    
+     scrape_interval: 5s
+     static_configs:
+       - targets: ['10.0.2.4:9100']
+
+  :wq
+
+ STEP 11: restart prometheus daemon
+ systemctl restart prometheus
+----------------------------------------------------------------------------------------------------
+
+ in prometheus page
+ |
+ query tab -> node_.... - about remote node/m/c metric details
+
+ --------------------------------------------------------------------------------------------------
+
+  
+
+   [OL7]	[Client]
+	
+     |		  |
+     |		  |
+     |____________|
+	   |
+	[ prometheus ] 
+ 		|
+		|__ /etc/prometheus/prometheus.yml
+				
+				|
+				- job_name: 'node_export-OL7'
+				  static_configs:
+				    - targets: [OLIP:9100]	
+				- job_name: 'node_export-client'
+				  static_config:
+				    - targets: [ClientIP:9100]
+				------------------------------------
+				systemctl restart prometheus
+
+				systemctl status prometheus
+
+  Note:-
+  --------
+  stop remote m/c firewall
+
+  systemctl stop firewalld
+
+
+   open a browswer -> localhost:9090{enter}
+				|
+				status
+				|
+				targets - list of all endpoints
+
+	
+    
+ ===============================================================================================
+
+ PromQL - PrometheusQueryLanguage
+
+ select 
+ calculate
+ between
+ filter - like condition based 
+ setoperations
+ 
+
+ metric {label}  
+	  |
+	 key=value 
+
+ select
+ ---------
+ node_filesystem_device_error 
+ 
+ filter
+ -------
+ node_filesystem_device_error -  set in curly braces 
+ 
+   {key=Value}
+
+   =
+   =~ <== Regx 
+
+  node_filesyste_device_error{device='/dev/sda1'}
+   
+  filter - multiple labels
+  -------------------------
+  node_filesyste_device_error{device='/dev/sda1',instance='10.0.2.4'}
+
+
+  filter - with regx 
+  ------------------
+  
+  node_filesyste_device_error{device='/dev/sda1',instance=~'10.0.*'}
+
+  
+  except device /dev/sda1 
+  ======
+
+  node_filesystem_device_error{device != "/dev/sda1"}
+   
+   
+ __name__ <== variable (label)
+
+ 
+  node_network_receive_bytes_total =~ "Pattern"  Vs __name__ =~ "node_network_.*"
+						    ______________________________
+
+
+  node_network_receive_bytes_total =~ 'pattern1|pattern2|pattern3"
+	
+	|
+  node_network_transmit_bytes_total =~ 'pattern1|pattern2'
+
+
+		Vs
+
+ __name__ =~ 'node_network_receive|transmit.*'
+	      -------------------- ==========
+		  P1			P2
+
+
+ {__name__ =~ 'node_network_(receive|transmit|pattern3|pattern4)_pattern'}
+ 
+  
+
+
+@@@@
+ applicationNamecontact<Classname>timer<method>
+@@@@
+   
+
+ ----
+ historical data
+ 
+ metricName offset <duration>
+
+ metricname offset 3d
+		  30d
+		  
+
+ metricname > Value 
+
+ metricname < value
+
+ metricname_Value + metricname_Value
+		  -
+		  *
+		  /
+ 
+ Metric type and Data types		
+		 ----------
+			|_scalar - float;string ->metricname{label=value,label=~"pattern"}
+			|_range vectors - collection of scalars - metricname{key=value}[offsetValue] =>metric_name{label=value}[duration] -> range vector --- offset <duration>
+			|_instant vectors
+			|_time
+ 
+
+  @<timestamp>
+
+
+ metric type
+ ------------
+ 1. counters
+ 2. Gauges
+ 3. Histogram
+ 4. Summaries
+
+ rate(http_requests_total[5m])[1h:45s]
+      -------------------
+	   (1)
+
+  http_requests_total[5m]
+  -------------------------(2)
+
+   http_requests_total[5m]
+
+      rate(http_requests_total[5m])[1h:45s] - 5minute rate of http requests.. for 1hr:45secs
+
+ Aggregation operators
+ -------------------------
+ sum
+ min
+ max
+ count
+ 
+...
+
+ function(inputType) ->outputType
+ 
+------------------------------------------------------------------------------------------
+
+   http_requests_total 
+   http_requests_total{job="prometheus",code != "200"}
+  
+
+   label_replace(instant-vector,targetlabel,replacement,sourcelabel,regxmatching)
+ --------------------------------------------------------------------------------------------------
+
+ PromQL - examples
+ ------
+  |
+
+ instant vector with filter 
+ --------------------------
+
+ metricname - scrape_duration_seconds
+ metricname{label=value} - scrape_duration_seconds{instance="localhost:9090"}
+ 
+ instant vector with regx
+ --------------------------
+ scrape_duration_seconds{instance=~"*.9[0-9]{3}"}
+
+ Range Vector with filter
+ -------------------------
+ metriname{label}[duration] -> range vector ->won't display graph
+ 
+
+ scrape_duration_seconds{instance="localhost:9090"}[5m] 
+ 
+ scrape_duration_seconds{instance="localhost:9090",job=~"prom.*"}[3m]
+ 
+ node_cpu_seconds_total{cpu="0",instance="localhost:9100",job=~"node_exporter|prometheus"}[2h]
+
+ scalar - single //sum()
+ .........................
+
+ Subqueries
+ -----------
+    function3(function2(function1(metric[])))
+
+    deriv(ceil(rate(node_netstat_tcp_inerr[3m]))[1m:])
+	
+ 
+ aggregation operators
+ ------------------------
+ max,min,count,sum
+
+ sum(rate(prometheus_http_requests_total[5m]))
+ count(rate(prometheus_http_requests_total[5m]))
+
+ 
+ aggregation with function
+ --------------------------
+ 
+ aggregation_operator by (group/field)(function(inputmetricType)[])
+ ....................................................................
+
+ sum by (job)(rate(prometheus_http_requests_total[5m]))
+
+=======================================================================================================
+
+ prometheus architecture
+ -------------------------
+ #   
+ # https://prometheus.io/docs/introduction/overview/
+
+ ---------------------------------------------------------------------------
+
+ prometheus_Alertmanager 
+ -----------------------
+ |
+ download alertmanager from github
+ |
+ cp alertmanager - /bin/
+ |
+ create a alertmanager config file - /etc/alertmanager/alertmanager.yml ( channel details )
+ |
+ create a alertmanager service file ( service file (or) unit file )
+ |
+ update - alertmanger details(portnumber) to prometheus(/etc/prometheus/prometheus.yml)
+
+		
+ alert_rules:
+
+ Template - rule
+ 
+ file.yml
+ - name:<S>Name of the alert
+   rules:
+   - alert:<S> ...
+     expr: PromQL with conditional statement
+     for: 1m
+     labels:
+     <>severity:<S>critical 
+     annotations:
+     <>summary: ......
+  ---------------------------------------------------------//
+
+
+
+
+
+   
+  
