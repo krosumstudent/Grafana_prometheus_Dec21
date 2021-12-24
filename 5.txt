@@ -1,0 +1,464 @@
+
+ Recap
+ ------
+ alertmanager  - bin 
+
+
+
+		[ prometheus ]
+		
+     [ ]-----pull--- //monitor
+ 			  ...
+			   ----------push----------[alertmanager] ---notify---[mail;slack;...]
+						   ++++++++++++++++  ------
+						     bin file		|__refer config file
+						     config file
+						     service file
+
+					/etc/alertmanager/alertmanager.yml
+							  |
+							channel details
+
+ 
+
+ 
+ Refer: alertmanager_install.sh 
+ https://github.com/krosumstudent/Grafana_prometheus_Dec21/blob/main/alertmanager_install.sh
+ --------------------------------
+ 
+ alert_rules:
+
+ Template - rule
+ 
+ file.yml
+ - name:<S>Name of the alert
+   rules:
+   - alert:<S> ...
+     expr: PromQL with conditional statement
+     for: 1m
+     labels:
+     <>severity:<S>critical 
+     annotations:
+     <>summary: ......
+  ---------------------------------------------------------//
+
+===================================================================================================
+ slack notification
+ -------------------
+ 
+ cat /etc/alertmanager/alertmanager.yml
+
+
+ receivers:
+ - name: ...
+   email: ...
+   - to : ...
+   slack_configs:
+   - api_url: https://...
+     channel: "#prometheus-course"
+     send_resolved: true
+ ----------------------------------------------------------------// verify the slack config in /etc/alertmanager/alertmanager.yml
+  slack configuration
+  ====================
+  https://company.slack.com/apps <==(1)
+
+		  [ manage ]<==(2)
+  
+  [customeintegrations]<==(3)
+
+  	[incoming webhooks]<==(4)
+
+  [add a configuration ]<==(5)
+
+  [choose channel]<==(6)
+	|
+     #prometheus-course
+
+ Adding incoming
+	...
+ 
+ webhookurl: https://hooks.slack... <==(7) 
+	    _______________________
+			|_copy this link - paste into /etc/alertmanager/alertmanager.yml file
+					   - api_url: <Paste the link>
+  systemctl restart alertmanger
+  systemctl status alertmanager
+  systemctl restart prometheus 
+
+ ----------------------------------------------------------------------------------------------------- 
+ 
+		node_exporter
+ [node-OS] <------------------->[prometheus]
+  .......				
+  metric - system resource 
+
+
+	
+ [webframe-work](ex: rails;spring;flask any appln)
+	|
+       [prometheus:8000]
+ ---------------|------
+		|---------------------------[prometheus]:9090 
+
+    ----------------------------------------------------    
+
+     [ Flask - webserver;python;mysql ]-port:5000
+     	|
+     [ prometheus monitoring:8000]
+	
+    ----------------------------------------------------
+		|	
+		|
+		|---------------------------[ prometheus:9090 ] ->query: mysql_.....
+
+
+  
+
+ application(framework) ->Running
+  |
+ LXC 
+  
+
+  [prometheus]
+	
+ --------------------------------------------------
+ 
+
+	python --------------DBI-----------DataBase
+	|
+	|
+	|
+	CGI
+	|
+	|
+	Web
+  
+ decorator design
+ ................
+ @function
+ def fx():
+	..
+ home aboutus	news  contactus  
+		|
+		|__ city1
+		|__ city2
+		|__ city3
+
+ @news
+ def city3:
+	...
+
+ @news
+ def city4:
+	..
+ 	..
+
+ localhost:5000 
+ localhost:5000/query		localhost:8000
+                                ......
+				mysql_...
+
+
+
+
+  /metrics/job/<Jobname>/{Label}/
+
+ 
+ 
+	[python] ---[ :<port>]
+	   | ----
+	   |-------- json format - ------>http --> metric format
+		  
+        	   --------------
+
+ 
+ [aws]
+   |
+  details -------------------->/etc/clouldwatchexporer/cloudwatchexporter.yml file
+
+  login details --------------> ~/.aws/credientials <==
+
+                             /etc/systemd/system/cloudwatch_exporter
+
+  systemctl start cloudwatch_exporter
+            start prometheus
+
+ 
+				
+ prometheus ->status ->targets
+
+ metric name starts with --> aws_*
+			     _____________
+
+
+  targets/metrics
+  --------
+  go_... - go lib function
+
+  promethes_ - builtin local 
+
+  node_  - remote node - node exporters 
+
+  flask_
+  mysql_
+  oracle_
+  java_
+  ruby_
+  irb_ 
+  appn_
+  custom_metric_
+  ----------------
+
+  aws_...
+  ---------
+
+  =================================================================================================
+ 
+  Goto aws console
+
+  aws services
+   |
+  Iam
+   |
+  create a new user -> users -> add a user ->[] Access types 
+					
+   |_ set permission ->[attach existing policy] ->policy type | cloud watch |
+							
+							[.] cloud watch ->(verify)->create a user
+
+    # download csv -> [user]  [accesskey] [secreat key] [show]
+							  |
+							 copy ..
+
+   vi ~/.aws/credentials 
+   
+   [defaults]
+   aws_access_key_id=<yourAccesssKEY>
+   aws_secreat_key=<yoursecreatkey>
+
+  |
+  vi /etc/prometheus/prometheus.yml
+  
+  - job_name: cloud_watch exporter
+     ...
+		['localhost:9106]
+
+  :wq
+
+ ----------------------------------------------------------------------------------------------
+
+
+  vi /etc/cloudwatchexporter/cloudwatchexporter.yml
+
+  ---
+  region: eu-west-1
+  metrics:
+  - aws_namespace: AWS/ELB
+    aws_metric_name: RequestCount
+    aws_dimensions: [AvailabilityZone, LoadBalancerName]
+    aws_dimension_select:
+      LoadBalancerName: [myLB]
+    aws_statistics: [Sum]
+
+  - aws_namespace: aws
+    aws_metric_name: Latency
+    ....
+  
+  ------
+  systemctl restart cloudwatchexporter
+  systemctl restart prometheus
+ 
+  go to prometheus webpage ->status ->target->cloudwatch_exporter
+
+  metric name starts with aws_..
+
+
+ ##############################################################################################
+ 
+ To get kubernetes metrics
+ ---------------------------
+
+ prometheus uses the kubernetes APIs to discover targets
+
+  -> node
+  -> endpoint
+  -> service
+  -> pod
+  -> ingress
+
+ monitoring namespace for metrics from the kubernetes
+
+ 1. API -> kubectl create namespace monitoring
+
+ 2. yml file
+   -----------
+   apiVersion: v1
+   kind: namespace
+   metdata:
+     name: monitoring 	
+						 
+ https://sysdig.com/blog/kubernetes-monitoring-prometheus/
+ 
+ https://phoenixnap.com/kb/prometheus-kubernetes-monitoring
+ ........................................................................................
+
+  
+ grafana-provisioning
+ ---------------------
+
+ file:p1.sh
+ ------------
+  echo 'deb https://packages.grafana.com/oss/deb stable main' >> /etc/apt/sources.list
+
+  curl https://packages.grafana.com/gpg.key | sudo apt-key add -
+sudo 
+  apt-get update
+  
+sudo apt-get -y install grafana
+
+
+  systemctl daemon-reload
+
+  systemctl start grafana-server
+  systemctl enable grafana-server.service
+ 
+  cp filepath/grafana/provisioning/datasource-prometheus.yml /etc/grafana/provisioning/dashboards
+
+  cp filepath/grafana/provisioning/dashboards.yml /etc/granfana/provisioning/dashboards
+
+  mkdir -p /var/lib/grafana/dashboards
+
+  cp filepath/grafana/dashboards/node-dashboard.json /var/lib/grafana/dashboards
+
+  systemctl restart grafana-server.service
+  ----------------------------------------------
+
+  |
+  file: grafan_prov.sh
+
+  function install_provisioning(){
+  
+  echo 'deb https://packages.grafana.com/oss/deb stable main' >> /etc/apt/sources.list
+
+  curl https://packages.grafana.com/gpg.key | sudo apt-key add -
+sudo 
+  apt-get update
+  
+sudo apt-get -y install grafana
+
+
+  systemctl daemon-reload
+
+  systemctl start grafana-server
+  systemctl enable grafana-server.service
+ 
+  cp filepath/grafana/provisioning/datasource-prometheus.yml /etc/grafana/provisioning/dashboards
+
+  cp filepath/grafana/provisioning/dashboards.yml /etc/granfana/provisioning/dashboards
+
+  mkdir -p /var/lib/grafana/dashboards
+
+  cp filepath/grafana/dashboards/node-dashboard.json /var/lib/grafana/dashboards
+
+  systemctl restart grafana-server.service
+  }
+
+  file: myp1.sh
+  source grafana_prov.sh
+  
+  for var in node1 node2 node3 node4
+  do
+	ssh $var
+	grafana_prov.sh
+	sleep 5	
+  done
+ 
+  |
+  ---
+  - hosts: <remotenode>
+    tasks:
+    - command: ...
+
+ ---------------------------------------------------------------------------------------------------------
+
+ prometheus rules
+
+  1. alert_rules
+
+  2. record_rules
+ 
+ /etc/prometheus/prometheus.yml
+
+ rule_files:
+
+  - alert: ... - alertmanager 
+
+  - record:
+  
+
+ on the querytag -> rate(requests_total{job="pattern"}[5m])
+
+ 
+  - record: path:requests:rate1m
+    expr: rate(requests_total{job="pattern"}[5m])
+
+ 
+ -------------------------------------------------------------------------------------------------------
+
+ scripts/1_prometheus_install.sh
+	 2_node_exporter.sh
+	 3_grafana_install.sh
+	 4_alertmanager.sh
+	 5_mail_service.sh
+	 6_cloud_exporter.sh
+	 
+    
+	
+  promQL
+   |
+  grafana - querytag -> [    ] ->visualization -> ...
+   
+ ---------------------------------------------------------------------
+  storage
+  ========	
+   |_local storage - Timeseries format
+	
+   group ->block ->directory 
+	
+   filestorage ->metadata //file.json
+		  |		
+		 info.about storage 
+
+   directory/|___block
+		   |__chunk1
+			|__...
+		 ...
+		 ...
+		 meta.json
+		
+	     |___block
+		   |_..
+
+		RAL/WAL
+
+	
+		
+   [application]
+
+   [node]
+
+   [cloud]
+
+   [container]
+
+   [dbapp]
+	
+   ----------------pull------------------->[prometheus]					 |->channels
+					   |						 |
+					  monitoring .. criticalstage --push alerts ---[alertmanager]
+  					   |
+					   |
+					promQL -->[grafana] - visualization
+								
+									
+ ----------------------------------------------------------------------------------------------------
